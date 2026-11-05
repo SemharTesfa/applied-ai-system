@@ -1,111 +1,174 @@
-# 🎧 Model Card: Music Recommender Simulation
+# 🎧 Model Card: VibeMatch 1.0
 
-## 1. Model Name  
+## 1. Model Name
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeMatch 1.0 — Content-Based Music Recommender**
 
----
+VibeMatch is a simple Python program that recommends songs based on a user's music preferences.
 
-## 2. Intended Use  
+## 2. Goal / Task
 
-Describe what your recommender is designed to do and who it is for. 
+The goal is to recommend songs that match what a user likes.
 
-Prompts:  
+The system compares each song with the user's preferred genre, mood, energy, valence, and tempo.
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+It gives every song a similarity score, ranks the songs, and recommends the best matches.
 
----
+The score measures how closely a song matches the user's preferences. It does not predict whether the user will definitely enjoy the song.
 
-## 3. How the Model Works  
+## 3. Data Used
 
-Explain your scoring approach in simple language.  
+The project uses a CSV dataset containing **20 fictional songs**.
 
-Prompts:  
+Each song includes:
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+- Song ID, title, and artist
+- Genre and mood
+- Energy and valence
+- Tempo in BPM
+- Danceability and acousticness
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+The scoring algorithm uses five features: genre, mood, energy, valence, and tempo.
 
----
+The dataset is small and does not include real user ratings or listening history. It also does not represent every genre, language, or musical style.
 
-## 4. Data  
+## 4. Algorithm Summary
 
-Describe the dataset the model uses.  
+VibeMatch uses **content-based filtering**.
 
-Prompts:  
+It compares song features with the user's preferences and calculates a weighted similarity score.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+The original scoring weights are:
 
----
+| Feature | Weight |
+|---|---:|
+| Genre | 30% |
+| Mood | 25% |
+| Energy | 20% |
+| Valence | 15% |
+| Tempo | 10% |
+| **Total** | **100%** |
 
-## 5. Strengths  
+Genre and mood receive points for exact matches.
 
-Where does your system seem to work well  
+Energy, valence, and tempo receive more points when their values are closer to the user's preferences.
 
-Prompts:  
+The system adds the weighted scores and ranks songs from highest to lowest.
 
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The original demonstration recommends three songs. During evaluation, I generated five recommendations for each user profile.
 
----
+## 5. Observed Behavior / Biases
 
-## 6. Limitations and Bias 
+I discovered that feature weights strongly affect the recommendations.
 
-Where the system struggles or behaves unfairly. 
+For example, the Sad but Energetic profile preferred blues, sad music, high energy, and fast tempo.
 
-Prompts:  
+Under the original algorithm, **Crossroads at Midnight** ranked first with a score of 0.57. It matched the blues genre, but its energy and tempo were much lower than the user's targets.
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+After increasing the energy weight, **Storm Runner** ranked first with a score of 0.57. Its energy and tempo were closer to the user's preferences, but it did not match the requested genre or mood.
 
----
+This showed me that a recommendation can be strong in one area but weak in another.
 
-## 7. Evaluation  
+Other limitations include the small dataset, exact genre and mood matching, missing listening history, and the risk of repeatedly recommending similar songs.
 
-How you checked whether the recommender behaved as expected. 
+## 6. Evaluation Process
 
-Prompts:  
+I tested the recommender with four user profiles.
 
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
+| Profile | Genre | Mood | Energy | Valence | Tempo |
+|---|---|---|---:|---:|---:|
+| High-Energy Pop | pop | happy | 0.90 | 0.85 | 130 BPM |
+| Chill Lofi | lofi | chill | 0.35 | 0.60 | 75 BPM |
+| Intense Rock | rock | intense | 0.95 | 0.45 | 155 BPM |
+| Sad but Energetic | blues | sad | 0.90 | 0.20 | 145 BPM |
 
-No need for numeric metrics unless you created some.
+I generated five recommendations for each profile and reviewed their scores and explanations.
 
----
+### Weight-Shift Experiment
 
-## 8. Future Work  
+I temporarily changed the scoring weights to test how they affect the results.
 
-Ideas for how you would improve the model next.  
+| Feature | Original | Experimental |
+|---|---:|---:|
+| Genre | 30% | 15% |
+| Mood | 25% | 25% |
+| Energy | 20% | 40% |
+| Valence | 15% | 15% |
+| Tempo | 10% | 10% |
 
-Prompts:  
+The experimental weights totaled 105%, so I divided the final weighted scores by 1.05.
 
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+### Results
 
----
+| Profile | Top Song (Experimental) | Score |
+|---|---|---:|
+| High-Energy Pop | Sunrise City | 0.96 |
+| Chill Lofi | Library Rain | 1.00 |
+| Intense Rock | Storm Runner | 0.98 |
+| Sad but Energetic | Storm Runner | 0.57 |
 
-## 9. Personal Reflection  
+The biggest change was in the Sad but Energetic profile.
 
-A few sentences about your experience.  
+Crossroads at Midnight dropped from first to fourth place. Storm Runner moved from third to first.
 
-Prompts:  
+I also compared the profiles to see how different preferences changed the recommendations. Chill Lofi favored slower, lower-energy songs, while Intense Rock favored faster, higher-energy songs.
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+One surprising result was that Intense Rock and Sad but Energetic both ranked Storm Runner first under the experimental weights, even though their genre and mood preferences were different.
+
+### Automated Testing
+
+I ran:
+
+```bash
+python -m src.main
+python -m pytest
+```
+
+The program loaded 20 songs and generated recommendations for all four profiles.
+
+**Test results: 2 passed, 0 failed.**
+
+The tests confirmed that the existing automated checks passed. They did not measure actual listener satisfaction.
+
+## 7. Intended Use and Non-Intended Use
+
+### Intended Use
+
+VibeMatch is designed for:
+
+- Learning how recommendation algorithms work.
+- Practicing Python programming and CSV data processing.
+- Testing different user preferences.
+- Understanding weighted scoring and ranking.
+- Studying how algorithm choices affect recommendations.
+
+### Non-Intended Use
+
+VibeMatch should not be used as:
+
+- A commercial music recommendation system.
+- A reliable prediction of someone's musical taste.
+- A system that claims to understand a person's emotions.
+- A replacement for recommendation systems trained on large, real-world datasets.
+
+It is an educational simulation, not a trained machine-learning model.
+
+## 8. Ideas for Improvement
+
+If I continued developing this project, I would focus on three improvements:
+
+1. **Build a Streamlit interface.** Users could select their preferences and view recommendations in a browser.
+2. **Expand the dataset and add feedback.** More songs and user likes or dislikes could improve personalization.
+3. **Make feature weights adjustable.** Users could decide whether genre, mood, energy, valence, or tempo matters most.
+
+## 9. Personal Reflection
+
+My biggest learning moment was the weight-shift experiment. I learned that changing a few numbers in the scoring algorithm can change which songs are recommended. For the Sad but Energetic profile, the top recommendation changed from Crossroads at Midnight to Storm Runner. This helped me understand that the developer's choices directly affect the results.
+
+I used **ChatGPT and Claude** to help with the project. These tools helped me understand the assignment, work through Python implementation ideas, plan experiments, and explain the results. I still needed to double-check the code and recommendations by running the program in VS Code. I also ran automated tests to confirm that the implementation passed the existing checks.
+
+I was surprised that a simple weighted scoring algorithm could produce recommendations that seemed personalized. The system does not learn from real users, but comparing song features with preferences can still produce useful rankings.
+
+If I extended this project, I would build an interactive interface, expand the song dataset, and allow users to adjust the scoring weights. I would also collect feedback to see whether users actually enjoy the recommended songs.
+
+This project helped me understand that building an AI-related system involves more than writing code. It also requires testing, evaluating limitations, documenting decisions, and checking whether the results make sense.

@@ -1,43 +1,19 @@
 # AI Interactions Log
 
-> **Stretch features only.** Only fill in the sections that apply to stretch features you attempted. If you did not attempt a stretch feature, leave its section blank or delete it. This file is not required for the core project.
-
----
+This file documents AI assistance used during development of the Music Recommender Simulation.
 
 ## Agentic Workflow (SF8)
 
-> Document your experience using an AI agent (e.g., Cursor Agent, Claude, Copilot) to make multi-step changes autonomously.
+**Status:** Not attempted.
 
-**What task did you give the agent?**
+I used ChatGPT to help understand the assignment, design the recommendation algorithm, and prepare Python implementation prompts. I manually ran the application and automated tests in VS Code.
 
-<!-- Describe the goal you asked the agent to accomplish -->
-
-**Prompts used:**
-
-<!-- Paste the key prompts you gave the agent -->
-
-**What did the agent generate or change?**
-
-<!-- List the files edited, code generated, or commands run -->
-
-**What did you verify or fix manually?**
-
-<!-- Describe anything the agent got wrong or that required human review -->
-
----
+I did not use an autonomous coding agent to independently make multi-step changes.
 
 ## Design Pattern (SF10)
 
-> Document how AI helped you choose or implement a design pattern.
+**Status:** Not attempted.
 
-**Which design pattern did you use?**
+The project uses functions and includes a `Recommender` class, but I have not intentionally implemented a formal software design pattern such as Strategy, Factory, or Observer.
 
-<!-- e.g., Strategy, Factory, Observer, etc. -->
-
-**How did AI help you brainstorm or implement it?**
-
-<!-- Describe the conversation or suggestions that led to your decision -->
-
-**How does the pattern appear in your final code?**
-
-<!-- Point to the relevant class or method -->
+The recommendation algorithm uses content-based filtering with weighted similarity scoring. This is a recommendation technique rather than a software design pattern.
