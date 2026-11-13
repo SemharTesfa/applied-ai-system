@@ -1,0 +1,37 @@
+
+flowchart TD
+    A["User Preferences<br/>Genre, Mood, Energy, Valence, Tempo"]
+    B["Input Validator<br/>src/validator.py"]
+    C{"Valid Input?"}
+    D["Song Retriever<br/>src/retriever.py"]
+    E[("Music Dataset<br/>data/songs.csv")]
+    F["Weighted Similarity Scoring<br/>src/recommender.py"]
+    G["Rank Songs by Score"]
+    H["Generate Explanations"]
+    I["Return Top-K Recommendations"]
+    J["Raise ValueError"]
+    K[("Application Logs<br/>logs/recommendations.log")]
+    L["Automated Reliability Tests<br/>pytest"]
+    M["Evaluation Report<br/>evaluation_results.md"]
+
+    A --> B
+    B --> C
+    C -->|Yes| D
+    C -->|No| J
+
+    E --> D
+    D --> F
+    F --> G
+    G --> H
+    H --> I
+
+    A -.->|Request logged| K
+    D -.->|Candidate count| K
+    I -.->|Completion logged| K
+    J -.->|Validation warning| K
+
+    L -.->|Tests system behavior| B
+    L -.->|Tests retrieval| D
+    L -.->|Tests recommendations| F
+    L -.->|Evidence| M
+    K -.->|Observed results| M

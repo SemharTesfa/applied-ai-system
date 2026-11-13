@@ -1,6 +1,10 @@
 import csv
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
+from src.retriever import SongRetriever
+from src.validator import validate_preferences
+from src.logger import logger
+
 
 @dataclass
 class Song:
@@ -89,11 +93,81 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
     return score, reasons
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """Score every song, rank by score (highest first), and return the top k as (song, score, explanation)."""
-    results: List[Tuple[Dict, float, str]] = []
-    for song in songs:
-        score, reasons = score_song(user_prefs, song)
-        results.append((song, score, "; ".join(reasons)))
 
-    return sorted(results, key=lambda item: item[1], reverse=True)[:k]
+
+
+def recommend_songs(
+    user_prefs: Dict,
+    songs: List[Dict],
+    k: int = 5
+) -> List[Tuple[Dict, float, str]]:
+    """
+    Generate music recommendations using:
+    1. Input validation
+    2. Song retrieval
+    3. Recommendation scoring
+    4. Ranking
+    5. Logging and error handling
+    """
+
+    # Step 1: Log the incoming request
+    logger.info("Recommendation request received")
+
+    # Step 2: Validate user preferences
+    try:
+        validate_preferences(user_prefs)
+    except ValueError as error:
+        logger.warning("Invalid preferences: %s", error)
+        raise
+
+    # Step 3: Validate recommendation count
+    if isinstance(k, bool) or not isinstance(k, int) or k <= 0:
+        logger.warning("Invalid recommendation count: %s", k)
+        raise ValueError("k must be a positive integer.")
+
+    # Step 4: Handle an empty dataset
+    if not songs:
+        logger.warning("Song dataset is empty")
+        return []
+
+    # Step 5: Retrieve relevant songs
+    retriever = SongRetriever(songs)
+
+    candidates = retriever.retrieve(
+        user_prefs,
+        max_candidates=len(songs)
+    )
+
+    logger.info(
+        "Retrieved %d candidate songs",
+        len(candidates)
+    )
+
+    # Step 6: Score retrieved songs
+    results: List[Tuple[Dict, float, str]] = []
+
+    for song in candidates:
+        score, reasons = score_song(user_prefs, song)
+
+        results.append(
+            (song, score, "; ".join(reasons))
+        )
+
+    # Step 7: Rank songs by score
+    results.sort(
+        key=lambda item: item[1],
+        reverse=True
+    )
+
+    # Step 8: Select top-k recommendations
+    top_results = results[:k]
+
+    # Step 9: Log successful completion
+    logger.info(
+        "Recommendation completed: %d candidates, %d results",
+        len(candidates),
+        len(top_results)
+    )
+
+    # Step 10: Return recommendations
+    return top_results

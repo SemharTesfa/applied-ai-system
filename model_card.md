@@ -1,174 +1,299 @@
-# 🎧 Model Card: VibeMatch 1.0
 
-## 1. Model Name
+# Model Card: Applied AI Music Recommendation System
 
-**VibeMatch 1.0 — Content-Based Music Recommender**
+## 1. System Overview
 
-VibeMatch is a simple Python program that recommends songs based on a user's music preferences.
+**System Name:** Applied AI Music Recommendation System
 
-## 2. Goal / Task
+**System Type:** Retrieval-enhanced, rule-based recommendation system
 
-The goal is to recommend songs that match what a user likes.
+**Programming Language:** Python
 
-The system compares each song with the user's preferred genre, mood, energy, valence, and tempo.
+**Dataset:** Local CSV containing 20 songs
 
-It gives every song a similarity score, ranks the songs, and recommends the best matches.
+**Interface:** Command-line application
 
-The score measures how closely a song matches the user's preferences. It does not predict whether the user will definitely enjoy the song.
+### Purpose
 
-## 3. Data Used
+The system recommends songs based on user preferences,
+including genre, mood, energy, valence, and tempo.
 
-The project uses a CSV dataset containing **20 fictional songs**.
+It extends the original Module 3 Music Recommender Simulation
+by adding input validation, retrieval, logging, automated
+testing, and reliability evaluation.
 
-Each song includes:
+The system does not use a trained machine learning model
+or a generative language model.
 
-- Song ID, title, and artist
-- Genre and mood
-- Energy and valence
-- Tempo in BPM
-- Danceability and acousticness
+## 2. Intended Use
 
-The scoring algorithm uses five features: genre, mood, energy, valence, and tempo.
+The system is designed for:
+- Educational demonstrations
+- Music recommendation experiments
+- Learning recommendation algorithms
+- Testing input validation and retrieval workflows
+- Demonstrating explainable recommendation logic
 
-The dataset is small and does not include real user ratings or listening history. It also does not represent every genre, language, or musical style.
+### Not Intended For
 
-## 4. Algorithm Summary
+- Production music streaming services
+- High-stakes decision-making
+- Predicting individual psychological conditions
+- Inferring sensitive personal attributes
+- Guaranteeing that users will enjoy recommended songs
 
-VibeMatch uses **content-based filtering**.
+## 3. Dataset
 
-It compares song features with the user's preferences and calculates a weighted similarity score.
+The dataset contains 20 songs stored in:
 
-The original scoring weights are:
+`data/songs.csv`
+
+Available features include:
+- Song ID
+- Title
+- Artist
+- Genre
+- Mood
+- Energy
+- Tempo
+- Valence
+- Danceability
+- Acousticness
+
+### Dataset Limitations
+
+The dataset is small and has limited genre and mood coverage.
+
+Recommendation results may not represent the full diversity
+of music or individual listener preferences.
+
+## 4. Recommendation Method
+
+The system uses a weighted similarity scoring algorithm.
+
+The implemented scoring weights are:
 
 | Feature | Weight |
 |---|---:|
-| Genre | 30% |
+| Genre | 15% |
 | Mood | 25% |
-| Energy | 20% |
+| Energy | 40% |
 | Valence | 15% |
 | Tempo | 10% |
-| **Total** | **100%** |
 
-Genre and mood receive points for exact matches.
+The weights are normalized by 1.05.
 
-Energy, valence, and tempo receive more points when their values are closer to the user's preferences.
+Matching categorical features contribute fixed points.
+Numerical features contribute points based on similarity
+to the user's requested values.
 
-The system adds the weighted scores and ranks songs from highest to lowest.
+Songs are ranked by their calculated scores.
 
-The original demonstration recommends three songs. During evaluation, I generated five recommendations for each user profile.
+These scores represent rule-based similarity, not
+calibrated probabilities or prediction confidence.
 
-## 5. Observed Behavior / Biases
+## 5. Retrieval
 
-I discovered that feature weights strongly affect the recommendations.
+The SongRetriever prioritizes songs matching the user's
+preferred genre or mood.
 
-For example, the Sad but Energetic profile preferred blues, sad music, high energy, and fast tempo.
+If additional candidates are needed, it includes other
+songs from the dataset.
 
-Under the original algorithm, **Crossroads at Midnight** ranked first with a score of 0.57. It matched the blues genre, but its energy and tempo were much lower than the user's targets.
+The recommendation function currently requests up to
+the entire dataset, so all available songs can be scored.
 
-After increasing the energy weight, **Storm Runner** ranked first with a score of 0.57. Its energy and tempo were closer to the user's preferences, but it did not match the requested genre or mood.
+This improves result coverage but reduces the filtering
+benefit of retrieval for the current 20-song dataset.
 
-This showed me that a recommendation can be strong in one area but weak in another.
+## 6. Input Validation and Guardrails
 
-Other limitations include the small dataset, exact genre and mood matching, missing listening history, and the risk of repeatedly recommending similar songs.
+The system validates:
+- User preferences must be a nonempty dictionary.
+- Genre and mood must be nonempty strings when supplied.
+- Energy must be between 0 and 1.
+- Valence must be between 0 and 1.
+- Tempo must be a positive number.
+- Recommendation count must be a positive integer.
 
-## 6. Evaluation Process
+Invalid inputs raise ValueError exceptions.
 
-I tested the recommender with four user profiles.
+The application records validation warnings in its log.
 
-| Profile | Genre | Mood | Energy | Valence | Tempo |
-|---|---|---|---:|---:|---:|
-| High-Energy Pop | pop | happy | 0.90 | 0.85 | 130 BPM |
-| Chill Lofi | lofi | chill | 0.35 | 0.60 | 75 BPM |
-| Intense Rock | rock | intense | 0.95 | 0.45 | 155 BPM |
-| Sad but Energetic | blues | sad | 0.90 | 0.20 | 145 BPM |
+## 7. Reliability Evaluation
 
-I generated five recommendations for each profile and reviewed their scores and explanations.
+### Observed Application Results
 
-### Weight-Shift Experiment
+Before the retrieval fallback update, logging showed:
 
-I temporarily changed the scoring weights to test how they affect the results.
-
-| Feature | Original | Experimental |
+| Profile | Candidates | Recommendations |
 |---|---:|---:|
-| Genre | 30% | 15% |
-| Mood | 25% | 25% |
-| Energy | 20% | 40% |
-| Valence | 15% | 15% |
-| Tempo | 10% | 10% |
+| High-Energy Pop | 3 | 3 |
+| Chill Lofi | 4 | 4 |
+| Intense Rock | 2 | 2 |
+| Sad but Energetic | 1 | 1 |
 
-The experimental weights totaled 105%, so I divided the final weighted scores by 1.05.
+These results revealed that strict retrieval could
+return fewer than the requested five recommendations.
 
-### Results
+### Reliability Improvement
 
-| Profile | Top Song (Experimental) | Score |
-|---|---|---:|
-| High-Energy Pop | Sunrise City | 0.96 |
-| Chill Lofi | Library Rain | 1.00 |
-| Intense Rock | Storm Runner | 0.98 |
-| Sad but Energetic | Storm Runner | 0.57 |
+The retrieval algorithm was modified to prioritize
+matching songs while allowing additional songs
+to fill the candidate pool.
 
-The biggest change was in the Sad but Energetic profile.
-
-Crossroads at Midnight dropped from first to fourth place. Storm Runner moved from third to first.
-
-I also compared the profiles to see how different preferences changed the recommendations. Chill Lofi favored slower, lower-energy songs, while Intense Rock favored faster, higher-energy songs.
-
-One surprising result was that Intense Rock and Sad but Energetic both ranked Storm Runner first under the experimental weights, even though their genre and mood preferences were different.
+Automated tests were updated to reflect the revised
+retrieval behavior.
 
 ### Automated Testing
 
-I ran:
+Test command:
 
-```bash
-python -m src.main
-python -m pytest
-```
+`python -m pytest tests -v`
 
-The program loaded 20 songs and generated recommendations for all four profiles.
+Tests cover:
+- Recommendation behavior
+- Genre and mood retrieval
+- Retrieval fallback
+- Invalid candidate counts
+- Input validation
+- Recommendation integration
 
-**Test results: 2 passed, 0 failed.**
+The most recently reported test result before updating
+the retrieval tests was 14 passed and 3 failed.
 
-The tests confirmed that the existing automated checks passed. They did not measure actual listener satisfaction.
+The final test outcome must be confirmed using the
+latest pytest output.
 
-## 7. Intended Use and Non-Intended Use
+## 8. Bias and Fairness Considerations
 
-### Intended Use
+Potential sources of bias include:
 
-VibeMatch is designed for:
+### Dataset Representation Bias
 
-- Learning how recommendation algorithms work.
-- Practicing Python programming and CSV data processing.
-- Testing different user preferences.
-- Understanding weighted scoring and ranking.
-- Studying how algorithm choices affect recommendations.
+Genres and moods with fewer songs have less variety
+in the available recommendations.
 
-### Non-Intended Use
+### Feature Weight Bias
 
-VibeMatch should not be used as:
+The selected feature weights emphasize energy and mood.
+This may disadvantage songs that match other preferences
+but differ in energy.
 
-- A commercial music recommendation system.
-- A reliable prediction of someone's musical taste.
-- A system that claims to understand a person's emotions.
-- A replacement for recommendation systems trained on large, real-world datasets.
+### Limited Personalization
 
-It is an educational simulation, not a trained machine-learning model.
+The system does not learn from individual listening
+history or feedback.
 
-## 8. Ideas for Improvement
+### Mitigation Strategies
 
-If I continued developing this project, I would focus on three improvements:
+- Expand the dataset across genres and moods.
+- Evaluate ranking quality across different profiles.
+- Allow users to adjust feature weights.
+- Introduce feedback-based ranking in future versions.
 
-1. **Build a Streamlit interface.** Users could select their preferences and view recommendations in a browser.
-2. **Expand the dataset and add feedback.** More songs and user likes or dislikes could improve personalization.
-3. **Make feature weights adjustable.** Users could decide whether genre, mood, energy, valence, or tempo matters most.
+## 9. Safety and Misuse Prevention
 
-## 9. Personal Reflection
+The system rejects malformed user preferences and
+invalid numerical values.
 
-My biggest learning moment was the weight-shift experiment. I learned that changing a few numbers in the scoring algorithm can change which songs are recommended. For the Sad but Energetic profile, the top recommendation changed from Crossroads at Midnight to Storm Runner. This helped me understand that the developer's choices directly affect the results.
+It does not require personal identifying information.
 
-I used **ChatGPT and Claude** to help with the project. These tools helped me understand the assignment, work through Python implementation ideas, plan experiments, and explain the results. I still needed to double-check the code and recommendations by running the program in VS Code. I also ran automated tests to confirm that the implementation passed the existing checks.
+The local dataset and deterministic algorithm reduce
+dependencies on external services.
 
-I was surprised that a simple weighted scoring algorithm could produce recommendations that seemed personalized. The system does not learn from real users, but comparing song features with preferences can still produce useful rankings.
+Application logs should not include unnecessary
+personal or sensitive information.
 
-If I extended this project, I would build an interactive interface, expand the song dataset, and allow users to adjust the scoring weights. I would also collect feedback to see whether users actually enjoy the recommended songs.
+## 10. Explainability
 
-This project helped me understand that building an AI-related system involves more than writing code. It also requires testing, evaluating limitations, documenting decisions, and checking whether the results make sense.
+Each recommendation includes a text explanation showing
+which preferences contributed to the similarity score.
+
+Explanations describe the implemented scoring calculation;
+they do not establish that a user will enjoy a song.
+
+## 11. Known Limitations
+
+- Only 20 songs are available.
+- No trained machine learning model is used.
+- No semantic embedding search is implemented.
+- No collaborative filtering is implemented.
+- No user feedback learning is available.
+- No formal human relevance evaluation has been completed.
+- Similarity scores are not probabilities.
+- The current retrieval stage processes all songs when
+  called from the recommendation function.
+
+## 12. Lessons Learned
+
+### Unexpected Reliability Finding
+
+The original retrieval logic returned only songs matching
+genre or mood.
+
+This resulted in fewer recommendations than requested
+for some user profiles.
+
+### Engineering Response
+
+The retrieval logic was changed to include additional
+candidates after prioritizing matching songs.
+
+Existing tests initially failed because they asserted
+the previous retrieval behavior.
+
+The tests were revised to verify the new behavior.
+
+### Design Tradeoff
+
+The revised approach improves recommendation coverage
+but may include less relevant songs.
+
+Future work should evaluate the tradeoff between
+candidate recall and recommendation relevance.
+
+## 13. AI Collaboration
+
+AI assistance was used to:
+- Design the retrieval architecture
+- Implement input validation
+- Add application logging
+- Develop automated tests
+- Diagnose test failures
+- Prepare project documentation
+
+### Accepted Suggestion
+
+Adding input validation and automated tests improved
+the system's ability to reject invalid preferences.
+
+### Revised Suggestion
+
+The initial strict retrieval approach was revised after
+observing that some profiles received too few results.
+
+The revised approach prioritizes matching songs and
+includes additional candidates when needed.
+
+All AI-generated code should be reviewed and tested
+before being treated as reliable.
+
+## 14. Future Improvements
+
+1. Expand the song dataset.
+2. Implement semantic retrieval using embeddings.
+3. Collect explicit user feedback.
+4. Evaluate ranking quality with human judgments.
+5. Improve dataset validation.
+6. Add more edge-case and integration tests.
+
+## 15. Conclusion
+
+This project demonstrates an explainable recommendation
+pipeline with retrieval, input validation, weighted
+scoring, logging, and automated reliability testing.
+
+Its primary contribution is improved system engineering
+and reliability rather than development of a trained
+machine learning model.
